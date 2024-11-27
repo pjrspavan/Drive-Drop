@@ -339,6 +339,7 @@
 -analyzer:"/Applications/Unity/Hub/Editor/2022.3.46f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.SourceGenerators.dll"
 "Assets/DenysAlmaral/CityPeople-FREE/Demo_Scenes/Scripts/DemoCamera.cs"
 "Assets/DenysAlmaral/CityPeople-FREE/Scripts/CityPeople.cs"
+"Assets/Scripts/MiniMapController.cs"
 "Assets/Scripts/PeopleSpawn.cs"
 "Assets/Scripts/PlayerController.cs"
 -langversion:9.0

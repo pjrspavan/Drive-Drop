@@ -1,73 +1,60 @@
 using UnityEngine;
-using UnityEngine.AI;
-
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 10f;            // Speed of the car
-    public float turnSpeed = 50f;        // Turn speed of the car
-    public Vector3 dropAreaSize = new Vector3(20f, 0f, 20f); // Size of the drop-off area
-    public Transform dropAreaCenter;     // Center of the drop-off area
+    public float speed = 10f;
+    public float turnSpeed = 50f;
     public GameObject destinationMarkerPrefab; // Marker to indicate the destination
-    public LineRenderer routeLine;      // LineRenderer to display the route
-    private GameObject ridePromptUI = null;     // UI prompt for accepting the ride (e.g., "Press Space to accept the ride")
+    public LineRenderer routeLine;            // LineRenderer to display the route
+    public GameObject ridePromptUI;           // UI prompt for accepting the ride
+
+    public float minX = -50f; // Minimum x-coordinate for drop-off area
+    public float maxX = 50f;  // Maximum x-coordinate for drop-off area
+    public float minZ = -50f; // Minimum z-coordinate for drop-off area
+    public float maxZ = 50f;  // Maximum z-coordinate for drop-off area
 
     private Rigidbody rb;
-    private bool passengerNearby = false; // Is the car near a passenger?
-    private bool rideAccepted = false;    // Has the user accepted the ride?
-    private GameObject currentPassenger;  // Reference to the nearby passenger
-    private GameObject destinationMarker; // Marker for the destination
-    private Vector3 dropLocation;         // Stores the destination location
-    private float dropOffRange = 5f;      // Distance from the drop location to consider the car close enough to drop off the passenger
-    private Vector3 passengerDropOffset = new Vector3(3f, 0f, 3f); // Offset distance from the car when dropping the passenger
+    private bool passengerNearby = false;
+    private bool rideAccepted = false;
+    private GameObject currentPassenger;
+    private GameObject destinationMarker;
+    private Vector3 dropLocation;
+    private float dropOffRange = 5f;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        // Ensure the LineRenderer is disabled initially
         if (routeLine != null)
-        {
             routeLine.enabled = false;
-        }
 
-        // Hide the ride prompt UI initially
         if (ridePromptUI != null)
-        {
             ridePromptUI.SetActive(false);
-        }
     }
 
     private void FixedUpdate()
     {
-        // Get input for movement and turning
-        float moveInput = Input.GetAxis("Vertical");   // W/S or Up/Down keys
-        float turnInput = Input.GetAxis("Horizontal"); // A/D or Left/Right keys
+        float moveInput = Input.GetAxis("Vertical");
+        float turnInput = Input.GetAxis("Horizontal");
 
-        // Move the car forward/backward
         Vector3 movement = transform.forward * moveInput * speed * Time.deltaTime;
         rb.MovePosition(rb.position + movement);
 
-        // Rotate the car
         float turn = turnInput * turnSpeed * Time.deltaTime;
         Quaternion turnRotation = Quaternion.Euler(0f, turn, 0f);
         rb.MoveRotation(rb.rotation * turnRotation);
 
-        // Accept the ride and pick up the passenger when space bar is pressed
         if (passengerNearby && !rideAccepted && Input.GetKeyDown(KeyCode.Space))
         {
             AcceptRide();
         }
 
-        // Update the route if the ride is accepted
         if (rideAccepted && routeLine != null)
         {
             UpdateRouteLine(transform.position, dropLocation);
         }
 
-        // Check if the car is close enough to the destination to drop off the passenger
         if (rideAccepted && Vector3.Distance(transform.position, dropLocation) < dropOffRange)
         {
-            // Prompt the user to drop off the passenger when space is pressed
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 DropOffPassenger();
@@ -75,159 +62,121 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Trigger-based passenger detection (instead of collision detection)
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Passenger") && !rideAccepted)
-        {
-            currentPassenger = other.gameObject; // Store the reference to the passenger
-            passengerNearby = true;
-
-            // Show the UI prompt to accept the ride
-            if (ridePromptUI != null)
-            {
-                ridePromptUI.SetActive(true);
-            }
-        }
-    }
-
-    // Trigger-based exit detection for passengers
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Passenger") && !rideAccepted)
-        {
-            passengerNearby = false;
-
-            // Hide the UI prompt if the passenger moves out of range
-            if (ridePromptUI != null)
-            {
-                ridePromptUI.SetActive(false);
-            }
-        }
-    }
-
-    // Method to accept the ride
     private void AcceptRide()
     {
         Debug.Log("Ride accepted! Picking up passenger...");
         rideAccepted = true;
         passengerNearby = false;
 
-        // Disable the passenger object to simulate picking them up
         if (currentPassenger != null)
             currentPassenger.SetActive(false);
 
-        // Generate a random drop-off location on the NavMesh
         dropLocation = GenerateRandomDropLocation();
-        Debug.Log($"Passenger drop-off location: {dropLocation}");
+        Debug.Log($"Drop-off location: {dropLocation}");
 
-        // Place a destination marker at the drop-off location
         if (destinationMarkerPrefab != null)
         {
             if (destinationMarker != null)
-                Destroy(destinationMarker); // Remove the old marker, if any
+                Destroy(destinationMarker);
 
             destinationMarker = Instantiate(destinationMarkerPrefab, dropLocation, Quaternion.identity);
         }
 
-        // Enable the route line
+        // Update the route line based on the NavMesh path
         if (routeLine != null)
         {
             routeLine.enabled = true;
+            UpdateRouteLine(transform.position, dropLocation);
         }
 
-        // Hide the ride prompt UI after the ride is accepted
         if (ridePromptUI != null)
-        {
             ridePromptUI.SetActive(false);
+    }
+
+    private void UpdateRouteLine(Vector3 startPosition, Vector3 endPosition)
+    {
+        // Calculate a NavMesh path
+        UnityEngine.AI.NavMeshPath navMeshPath = new UnityEngine.AI.NavMeshPath();
+        if (UnityEngine.AI.NavMesh.CalculatePath(startPosition, endPosition, UnityEngine.AI.NavMesh.AllAreas, navMeshPath))
+        {
+            // Set the number of points in the LineRenderer
+            routeLine.positionCount = navMeshPath.corners.Length;
+
+            // Update the LineRenderer with the path points
+            for (int i = 0; i < navMeshPath.corners.Length; i++)
+            {
+                Vector3 point = navMeshPath.corners[i];
+                point.y += 0.5f; // Slightly raise the points above the road for better visibility
+                routeLine.SetPosition(i, point);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Could not calculate a NavMesh path.");
+            routeLine.positionCount = 0; // Clear the LineRenderer if no path is found
         }
     }
 
-    // Drop off the passenger at the drop location
+
     private void DropOffPassenger()
     {
         Debug.Log("Dropping off the passenger...");
 
-        // Instantiate the passenger at a position near the drop location
         if (currentPassenger != null)
         {
-            // Add an offset to ensure the passenger is placed at some distance from the car
-            Vector3 dropPosition = dropLocation + passengerDropOffset;
-
-            // Re-enable the passenger and place them at the drop location
+            Vector3 dropPosition = dropLocation + new Vector3(3f, 0f, 3f);
             currentPassenger.transform.position = dropPosition;
-            currentPassenger.SetActive(true);  // Make sure the passenger is active again after being deactivated
-
-            // Clear the reference to the current passenger
+            currentPassenger.SetActive(true);
             currentPassenger = null;
         }
 
-        // Reset the car state and disable route line
         rideAccepted = false;
-        if (routeLine != null)
-        {
-            routeLine.enabled = false;
-        }
 
-        // Reset the destination marker
+        if (routeLine != null)
+            routeLine.enabled = false;
+
         if (destinationMarker != null)
-        {
             Destroy(destinationMarker);
-        }
     }
 
-    // Generate a random drop-off location ensuring it's on the NavMesh
     private Vector3 GenerateRandomDropLocation()
     {
-        // Generate a random position within the defined drop area
-        Vector3 randomPosition = new Vector3(
-            Random.Range(-dropAreaSize.x / 2, dropAreaSize.x / 2),
-            0f, // Assuming the area is flat on the ground
-            Random.Range(-dropAreaSize.z / 2, dropAreaSize.z / 2)
-        );
+        float randomX = Random.Range(minX, maxX);
+        float randomZ = Random.Range(minZ, maxZ);
+        Vector3 candidatePosition = new Vector3(randomX, 0f, randomZ);
 
-        // Offset the random position to align with the drop area center
-        Vector3 candidatePosition = dropAreaCenter.position + randomPosition;
-
-        // Use NavMesh.SamplePosition to ensure the position is on a NavMesh
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(candidatePosition, out hit, 10f, NavMesh.AllAreas))
+        UnityEngine.AI.NavMeshHit hit;
+        if (UnityEngine.AI.NavMesh.SamplePosition(candidatePosition, out hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
         {
-            // Return the closest valid position on the NavMesh
             return hit.position;
         }
-        else
+
+        Debug.LogWarning("No valid NavMesh position found. Retrying...");
+        return GenerateRandomDropLocation();
+    }
+
+
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Passenger") && !rideAccepted)
         {
-            Debug.LogWarning("No valid NavMesh position found. Retrying...");
-            // Retry generating a valid position (you could loop this or return a default position)
-            return GenerateRandomDropLocation();
+            currentPassenger = other.gameObject;
+            passengerNearby = true;
+
+            if (ridePromptUI != null)
+                ridePromptUI.SetActive(true);
         }
     }
 
-    // Update the route line between the start and end positions
-    private void UpdateRouteLine(Vector3 startPosition, Vector3 endPosition)
+    private void OnTriggerExit(Collider other)
     {
-        // Adjust the y-position of the start and end points
-        Vector3 startOffset = new Vector3(startPosition.x, startPosition.y + 1f, startPosition.z);
-        Vector3 endOffset = new Vector3(endPosition.x, endPosition.y + 1f, endPosition.z);
-
-        // Update the LineRenderer positions
-        routeLine.SetPosition(0, startOffset); // Start position with y-offset
-        routeLine.SetPosition(1, endOffset);   // End position with y-offset
-    }
-
-    // Draw the drop area and test random drop location in the Scene view for visualization
-    private void OnDrawGizmosSelected()
-    {
-        if (dropAreaCenter != null)
+        if (other.CompareTag("Passenger") && !rideAccepted)
         {
-            // Draw the drop area in the Scene view for visualization
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireCube(dropAreaCenter.position, dropAreaSize);
+            passengerNearby = false;
 
-            // Debugging: Visualize the random position with a red sphere
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(dropAreaCenter.position + GenerateRandomDropLocation(), 0.5f);
+            if (ridePromptUI != null)
+                ridePromptUI.SetActive(false);
         }
     }
 }
