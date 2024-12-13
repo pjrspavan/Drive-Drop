@@ -1,12 +1,19 @@
 using UnityEngine;
+using TMPro;
 public class PlayerController : MonoBehaviour
 {
+    
     public float speed = 10f;
     public float turnSpeed = 50f;
     public GameObject destinationMarkerPrefab; // Marker to indicate the destination
     public LineRenderer routeLine;            // LineRenderer to display the route
     public GameObject ridePromptUI;           // UI prompt for accepting the ride
 
+    public int rides;
+    public TMP_Text timerTxt;
+    public TMP_Text ridesTxt;
+    public float timeRemaining = 300;
+    private bool timerRunning = false;
     public float minX = -50f; // Minimum x-coordinate for drop-off area
     public float maxX = 50f;  // Maximum x-coordinate for drop-off area
     public float minZ = -50f; // Minimum z-coordinate for drop-off area
@@ -23,12 +30,40 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+        timerRunning = true;
+        ridesTxt.text = string.Format("Rides: {0}", rides);
 
         if (routeLine != null)
             routeLine.enabled = false;
 
         if (ridePromptUI != null)
             ridePromptUI.SetActive(false);
+    }
+
+    private void Update(){
+        if (timerRunning)
+        {
+            if (timeRemaining > 0)
+            {
+                timeRemaining -= Time.deltaTime; 
+                UpdateTimerDisplay(timeRemaining); 
+            }
+            else
+            {
+                timeRemaining = 0;
+                timerRunning = false;
+            }
+        }
+    }
+
+    void UpdateTimerDisplay(float timeToDisplay)
+    {
+        // Convert seconds to minutes and seconds
+        int minutes = Mathf.FloorToInt(timeToDisplay / 60);
+        int seconds = Mathf.FloorToInt(timeToDisplay % 60);
+
+        // Update the UI text
+        timerTxt.text = string.Format("Time: {0:00}:{1:00}", minutes, seconds);
     }
 
     private void FixedUpdate()
@@ -131,6 +166,8 @@ public class PlayerController : MonoBehaviour
         }
 
         rideAccepted = false;
+        rides-=1;
+        ridesTxt.text = string.Format("Rides: {0}", rides);
 
         if (routeLine != null)
             routeLine.enabled = false;
