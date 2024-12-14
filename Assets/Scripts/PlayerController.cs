@@ -2,7 +2,7 @@ using UnityEngine;
 using TMPro;
 public class PlayerController : MonoBehaviour
 {
-    
+
     public float speed = 10f;
     public float turnSpeed = 50f;
     public GameObject destinationMarkerPrefab; // Marker to indicate the destination
@@ -23,10 +23,11 @@ public class PlayerController : MonoBehaviour
     private bool passengerNearby = false;
     private bool rideAccepted = false;
     private GameObject currentPassenger;
+    private GameObject previousPassenger;
     private GameObject destinationMarker;
     private Vector3 dropLocation;
     private float dropOffRange = 5f;
-
+    public string nextLevel;
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -40,18 +41,25 @@ public class PlayerController : MonoBehaviour
             ridePromptUI.SetActive(false);
     }
 
-    private void Update(){
+    private void Update()
+    {
         if (timerRunning)
         {
             if (timeRemaining > 0)
             {
-                timeRemaining -= Time.deltaTime; 
-                UpdateTimerDisplay(timeRemaining); 
+                timeRemaining -= Time.deltaTime;
+                UpdateTimerDisplay(timeRemaining);
+                if (rides == 0)
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(nextLevel);
             }
             else
             {
                 timeRemaining = 0;
                 timerRunning = false;
+                if (rides > 0)
+                {
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("Lose Scene");
+                }
             }
         }
     }
@@ -99,15 +107,20 @@ public class PlayerController : MonoBehaviour
 
     private void AcceptRide()
     {
-        Debug.Log("Ride accepted! Picking up passenger...");
         rideAccepted = true;
         passengerNearby = false;
 
         if (currentPassenger != null)
+        {
+            if (previousPassenger != null)
+            {
+                previousPassenger.transform.position = currentPassenger.transform.position;
+                previousPassenger.tag = "Passenger";
+            }
             currentPassenger.SetActive(false);
+        }
 
         dropLocation = GenerateRandomDropLocation();
-        Debug.Log($"Drop-off location: {dropLocation}");
 
         if (destinationMarkerPrefab != null)
         {
@@ -120,6 +133,9 @@ public class PlayerController : MonoBehaviour
         // Update the route line based on the NavMesh path
         if (routeLine != null)
         {
+            // Assign the LineRenderer to the RouteLine layer
+            routeLine.gameObject.layer = LayerMask.NameToLayer("RouteLine");
+
             routeLine.enabled = true;
             UpdateRouteLine(transform.position, dropLocation);
         }
@@ -162,11 +178,14 @@ public class PlayerController : MonoBehaviour
             Vector3 dropPosition = dropLocation + new Vector3(3f, 0f, 3f);
             currentPassenger.transform.position = dropPosition;
             currentPassenger.SetActive(true);
+            currentPassenger.tag = "Untagged";
+            previousPassenger = currentPassenger;
             currentPassenger = null;
+
         }
 
         rideAccepted = false;
-        rides-=1;
+        rides -= 1;
         ridesTxt.text = string.Format("Rides: {0}", rides);
 
         if (routeLine != null)
@@ -178,19 +197,31 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 GenerateRandomDropLocation()
     {
-        float randomX = Random.Range(minX, maxX);
-        float randomZ = Random.Range(minZ, maxZ);
-        Vector3 candidatePosition = new Vector3(randomX, 0f, randomZ);
+        float minDistanceFromPlayer = 30f; // Minimum distance the drop-off point should be from the player
+        Vector3 candidatePosition;
+        float playerX = transform.position.x; // Player's current X position
+        float playerZ = transform.position.z; // Player's current Z position
 
+        do
+        {
+            float randomX = Random.Range(minX, maxX);
+            float randomZ = Random.Range(minZ, maxZ);
+            candidatePosition = new Vector3(randomX, 0f, randomZ);
+
+            // Check if the candidatePosition is far enough from the player
+        } while (Vector3.Distance(candidatePosition, new Vector3(playerX, 0f, playerZ)) < minDistanceFromPlayer);
+
+        // Ensure the drop-off location is on the NavMesh
         UnityEngine.AI.NavMeshHit hit;
         if (UnityEngine.AI.NavMesh.SamplePosition(candidatePosition, out hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
         {
             return hit.position;
         }
 
-        Debug.LogWarning("No valid NavMesh position found. Retrying...");
+        // If NavMesh fails, retry
         return GenerateRandomDropLocation();
     }
+
 
 
 

@@ -29,12 +29,12 @@ public class PeopleSpawn : MonoBehaviour
         while (isColliding)
         {
             randomPosition = new Vector3(
-                Random.Range(-99.3f, -99.3f),
-                ground.transform.position.y + 0.6f,
-                Random.Range(-10f, 10f)
+                Random.Range(-99.8f, -99.8f),
+                ground.transform.position.y + 0.2f,
+                Random.Range(-10.0f, 10.0f)
             );
 
-            var colliders = Physics.OverlapBox(randomPosition, new Vector3(1.0f, 0.5f, 1.0f));
+            var colliders = Physics.OverlapBox(randomPosition, new Vector3(1.0f, 0.1f, 1.0f));
             if (colliders.Length == 0)
                 isColliding = false;
         }

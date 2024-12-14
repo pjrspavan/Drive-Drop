@@ -80,7 +80,7 @@ public class VehicleController : MonoBehaviour
         if (collision.gameObject.CompareTag("Buildings"))
         {
             // Turn the vehicle by a certain angle
-            TurnVehicle(10f); // Example: turn 90 degrees
+            //TurnVehicle(10f); // Example: turn 90 degrees
         }
     }
 
