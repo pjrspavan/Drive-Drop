@@ -31,6 +31,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+
         timerRunning = true;
         ridesTxt.text = string.Format("Rides: {0}", rides);
 
@@ -108,6 +109,7 @@ public class PlayerController : MonoBehaviour
     private void AcceptRide()
     {
         rideAccepted = true;
+
         passengerNearby = false;
 
         if (currentPassenger != null)
@@ -172,7 +174,7 @@ public class PlayerController : MonoBehaviour
     private void DropOffPassenger()
     {
         Debug.Log("Dropping off the passenger...");
-
+        
         if (currentPassenger != null)
         {
             Vector3 dropPosition = dropLocation + new Vector3(3f, 0f, 3f);

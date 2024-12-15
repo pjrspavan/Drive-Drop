@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 539743548}
   - component: {fileID: 539743547}
   - component: {fileID: 539743546}
+  - component: {fileID: 539743549}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -214,6 +215,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &539743549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 539743545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfd1ac3a8d73240169bf6de833def29d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &555697896
 GameObject:
   m_ObjectHideFlags: 0
@@ -274,8 +287,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Press any key to continue
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 04095b89586cf4d49b27fb223a654cac, type: 2}
-  m_sharedMaterial: {fileID: -1608234545077023241, guid: 04095b89586cf4d49b27fb223a654cac, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -523,8 +536,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'You lose '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: a5c10301e28b5485eb8ae28cbeb71300, type: 2}
-  m_sharedMaterial: {fileID: -9030027621197789947, guid: a5c10301e28b5485eb8ae28cbeb71300, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
