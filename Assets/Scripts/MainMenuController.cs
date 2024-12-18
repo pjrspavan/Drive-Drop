@@ -12,6 +12,8 @@ public class MainMenuControllwe : MonoBehaviour
 
         if (Input.anyKeyDown)
         {
+            PlayerPrefs.SetInt("balance",0);
+            PlayerPrefs.Save();
             UnityEngine.SceneManagement.SceneManager.LoadScene("Level1");
         }
     }

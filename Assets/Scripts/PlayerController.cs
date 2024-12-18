@@ -1,8 +1,16 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 public class PlayerController : MonoBehaviour
 {
 
+
+    public AudioClip pickupSFX;
+    public AudioClip dropOffSFX;
+    private AudioSource audioSource;
+
+    
     public float speed = 10f;
     public float turnSpeed = 50f;
     public GameObject destinationMarkerPrefab; // Marker to indicate the destination
@@ -12,6 +20,9 @@ public class PlayerController : MonoBehaviour
     public int rides;
     public TMP_Text timerTxt;
     public TMP_Text ridesTxt;
+
+    public TMP_Text ridePromptTxt;
+    public TMP_Text bankAccount;
     public float timeRemaining = 300;
     private bool timerRunning = false;
     public float minX = -50f; // Minimum x-coordinate for drop-off area
@@ -27,10 +38,22 @@ public class PlayerController : MonoBehaviour
     private GameObject destinationMarker;
     private Vector3 dropLocation;
     private float dropOffRange = 5f;
+    private int randomInt = 0; 
     public string nextLevel;
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+        audioSource = GetComponent<AudioSource>();
+        bankAccount.text = string.Format("Balance: ${0}", PlayerPrefs.GetInt("balance", 0));
+
+        if (audioSource == null)
+        {
+            Debug.LogError("AudioSource missing!");
+        }
+        if (pickupSFX == null || dropOffSFX == null)
+        {
+            Debug.LogError("Audio clips missing! Assign jumpingSFX and scoreSFX in Inspector.");
+        }
 
         timerRunning = true;
         ridesTxt.text = string.Format("Rides: {0}", rides);
@@ -89,7 +112,14 @@ public class PlayerController : MonoBehaviour
 
         if (passengerNearby && !rideAccepted && Input.GetKeyDown(KeyCode.Space))
         {
+            audioSource.PlayOneShot(pickupSFX);
             AcceptRide();
+            int balance = PlayerPrefs.GetInt("balance", 0);
+            balance+=randomInt;
+            PlayerPrefs.SetInt("balance", balance);
+            PlayerPrefs.Save();
+            bankAccount.text = string.Format("Balance: ${0}", balance);
+
         }
 
         if (rideAccepted && routeLine != null)
@@ -99,8 +129,11 @@ public class PlayerController : MonoBehaviour
 
         if (rideAccepted && Vector3.Distance(transform.position, dropLocation) < dropOffRange)
         {
+            ridePromptUI.SetActive(true);
+            ridePromptTxt.text = string.Format("Press Space to complete the ride");
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                ridePromptUI.SetActive(false);
                 DropOffPassenger();
             }
         }
@@ -174,7 +207,7 @@ public class PlayerController : MonoBehaviour
     private void DropOffPassenger()
     {
         Debug.Log("Dropping off the passenger...");
-        
+        audioSource.PlayOneShot(dropOffSFX);
         if (currentPassenger != null)
         {
             Vector3 dropPosition = dropLocation + new Vector3(3f, 0f, 3f);
@@ -231,6 +264,8 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("Passenger") && !rideAccepted)
         {
+            randomInt = Random.Range(50, 101); 
+            ridePromptTxt.text = string.Format("Press Space to accept the ride ${0}", randomInt);
             currentPassenger = other.gameObject;
             passengerNearby = true;
 
